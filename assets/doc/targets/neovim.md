@@ -7,9 +7,9 @@ let g:slime_target = "neovim"
 ```
 
 
-## Manual/Prompted Configuration
-
 When you invoke `vim-slime` for the first time, `:SlimeConfig` or one of the send functions, you will be prompted for more configuration.
+
+## Manual/Prompted Configuration
 
 If the global variable `g:slime_suggest_default` is:
 
