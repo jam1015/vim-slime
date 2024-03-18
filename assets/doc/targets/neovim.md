@@ -6,27 +6,27 @@
 let g:slime_target = "neovim"
 ```
 
-
-When you invoke `vim-slime` for the first time, `:SlimeConfig` or one of the send functions, you will be prompted for more configuration.
+When you invoke `vim-slime` for the first time (`:SlimeConfig` or one of the send functions), you will be prompted for more configuration.
 
 ## Manual/Prompted Configuration
 
 If the global variable `g:slime_suggest_default` is:
 
-- Nonzero (logical True): The last terminal you opened before calling vim-slime will determine which `job-id` is presented as default. If that terminal is closed, one of the previously opened terminals will be suggested on subsequent configurations. The user can tab through a popup menu of valid configuration values.
+- Nonzero (logical True): The last terminal you opened before calling vim-slime will determine which job ID is presented as default. If that terminal is closed, one of the previously opened terminals will be suggested on subsequent configurations. The user can tab through a popup menu of valid configuration values.
 
-- `0`: (logical False): No default will be suggested.
+- `0` (logical False), or nonexistent: No default will be suggested.
+
 
 
 In either case, in Neovim's default configuration, menu-based completion can be activated with `<Tab>`/`<S-Tab>`, and the menu can be navigated with `<Tab>`/`<S-Tab` or `<C-n>`/`<C-p>`.  Autocompletion plugins such as [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) can interfere with this.
 
-To use the terminal's PID as input instead of Neovim's internal job-id of the terminal:
+To use the terminal's PID as input instead of Neovim's internal job ID of the terminal:
 
 ```vim
 let g:slime_input_pid=1
 ```
 
-PIDs of processes of potential target terminals are visible to Neovim on Windows as well as MacOS and Linux.
+The `PID` is included in the terminal buffers' name, visible in the default terminal window status bar.
 
 
 ## Menu Prompted Configuration
@@ -54,7 +54,7 @@ For example:
 let g:slime_neovim_menu_order = [{'name': 'buffer name: '}, {'pid': 'shell process identifier: '}, {'jobid': 'neovim internal job identifier: '}, {'term_title': 'process or pwd: '}]
 ```
 
-The user can also set the delimeter (including whitespace) string between the fields (`, ` by default) with `g:slime_neovim_menu_delimiter`.
+The user can also set the delimiter (including whitespace) string between the fields (`, ` by default) with `g:slime_neovim_menu_delimiter`.
 
 ```vim
 let g:slime_neovim_menu_delimiter = ' | '
@@ -65,7 +65,9 @@ No validation is performed on these customization values so be sure they are pro
 
 ## Terminal Process Identification
 
-To manually check the right value of `job-id`  (but not `PID`) try:
+As mentioned earlier, the `PID` of a process is included in the name of a terminal buffer.
+
+To manually check the right value of the terminal job ID,  (but not pid) try:
 
 ```vim
 echo &channel
@@ -73,7 +75,7 @@ echo &channel
 
 from the buffer running your terminal.
 
-Another way to easily see the `PID` and job ID is to override the status bar of terminals to show the job id and PID.
+Another way to easily see the `PID` and job ID is to override the status bar of terminals to show the job ID and PID.
 
 ```vim
 " in case an external process kills the terminal's shell and &channel doesn't exist anymore
@@ -90,11 +92,11 @@ endfunction
 autocmd TermOpen * setlocal statusline=%{bufname()}%=id:\ %{&channel}\ pid:\ %{Safe_jobpid(&channel)}
 ```
 
-See `h:statusline` in Neovim's documentiation for more details.
+See `h:statusline` in Neovim's documentation for more details.
 
 ### Statusline Plugins
 
-If you are using a plugin to manage your status line, see that plugin's documentation to see how to confiugre the status line to display `&channel` and `jobpid(&channel)`.
+If you are using a plugin to manage your status line, see that plugin's documentation to see how to configure the status line to display `&channel` and `jobpid(&channel)`.
 
 Many status line plugins for Neovim are configured in lua.
 
@@ -114,9 +116,9 @@ local function get_chan_jobpid()
   let pid_out = ""
   
   try
-  let pid_out = string(jobpid(&channel))
-  " in case an external process kills the terminal's shell; jobpid will error
-  catch /^Vim\%((\a\+)\)\=:E900/
+    let pid_out = string(jobpid(&channel))
+    " in case an external process kills the terminal's shell; jobpid will error
+    catch /^Vim\%((\a\+)\)\=:E900/
   endtry
   		echo pid_out
   ]], {output = true})
@@ -128,10 +130,10 @@ Those confused by the syntax of the vimscript string passed as an argument to `v
 
 ## Status-Line Modifications for Configured Buffers
 
-Here is an example snippet of vimscrip to set the status line for buffers that are configured to send code to a terminal:
+Here is an example snippet of vimscript to set the status line for buffers that are configured to send code to a terminal:
 
 ```vim
-" Function to safely check for b:slime_config and return the jobid
+" Function to safely check for b:slime_config and return the job ID
 function! GetSlimeJobId()
   if exists("b:slime_config") && type(b:slime_config) == v:t_dict && has_key(b:slime_config, 'jobid') && !empty(b:slime_config['jobid'])
     return ' | jobid: ' . b:slime_config['jobid'] . ' '
@@ -156,6 +158,8 @@ set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
 ### Lua Functions For Returning Config Components
 
 
+Can be useful for status line plugins:
+
 ```lua
 local function get_slime_jobid()
   if vim.b.slime_config and vim.b.slime_config.jobid then
@@ -176,15 +180,14 @@ local function get_slime_pid()
 end
 ```
 
-Can be useful for status line plugins.
 
 ## Automatic Configuration
 
-Instead of the prompted job id input method detailed above, you can specify a lua function that will automatically configure vim-slime with a job id:
+Instead of the prompted job ID input method detailed above, you can specify a lua function that will automatically configure vim-slime with a job id:
 
 ```lua
 vim.g.slime_get_jobid = function()
-  -- some way to select and return jobid
+  -- some way to select and return job ID
 end
 ```
 
@@ -197,23 +200,23 @@ This is not possible or straightforward to do in pure vimscript due to capitaliz
  ## Example Installation and Configuration with [lazy.nvim](https://github.com/folke/lazy.nvim)
 
 
- ```lua
+```lua
 {
-	"jpalardy/vim-slime",
-	init = function()
-		-- these two should be set before the plugin loads
-		vim.g.slime_target = "neovim"
-		vim.g.slime_no_mappings = true
-	end,
-	config = function()
-		vim.g.slime_input_pid = false
-		vim.g.slime_suggest_default = true
-		vim.g.slime_menu_config = false
-		-- called MotionSend but works with textobjects as well
-		vim.keymap.set("n", "gz", "<Plug>SlimeMotionSend", { remap = true, silent = false })
-		vim.keymap.set("n", "gzz", "<Plug>SlimeLineSend", { remap = true, silent = false })
-		vim.keymap.set("x", "gz", "<Plug>SlimeRegionSend", { remap = true, silent = false })
-		vim.keymap.set("n", "gzc", "<Plug>SlimeConfig", { remap = true, silent = false })
-	end,
+  "jpalardy/vim-slime",
+  init = function()
+    -- these two should be set before the plugin loads
+    vim.g.slime_target = "neovim"
+    vim.g.slime_no_mappings = true
+  end,
+  config = function()
+    vim.g.slime_input_pid = false
+    vim.g.slime_suggest_default = true
+    vim.g.slime_menu_config = false
+    -- called MotionSend but works with textobjects as well
+    vim.keymap.set("n", "gz", "<Plug>SlimeMotionSend", { remap = true, silent = false })
+    vim.keymap.set("n", "gzz", "<Plug>SlimeLineSend", { remap = true, silent = false })
+    vim.keymap.set("x", "gz", "<Plug>SlimeRegionSend", { remap = true, silent = false })
+    vim.keymap.set("n", "gzc", "<Plug>SlimeConfig", { remap = true, silent = false })
+  end,
 }
- ```
+```
